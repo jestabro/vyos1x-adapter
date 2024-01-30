@@ -97,6 +97,37 @@ CAMLprim value set_path( value handle, value ml_list, value len )
     CAMLreturn( ml_data );
 }
 
+CAMLprim value set_path_reversed( value handle, value ml_list, value len )
+{
+    CAMLparam3( handle, ml_list, len );
+    CAMLlocal2( ml_data, head );
+    int length = Int_val(len);
+    char * raw_data;
+    size_t data_len;
+    const char *path[length];
+    int ii = 0;
+    while ( ml_list != Val_emptylist )
+    {
+        head = Field(ml_list, 0);
+        path[length-1-ii++] = String_val(head);
+        ml_list = Field(ml_list, 1);
+    }
+
+    void *h = voidptr_of_val( handle );
+    out_data_t *out_data = vy_set_path(h, path, length);
+    if (out_data->length > 0) {
+        data_len = out_data->length;
+        raw_data = out_data->data;
+        ml_data = caml_alloc_initialized_string(data_len, raw_data);
+    }
+    else {
+        ml_data = caml_copy_string("");
+    }
+    out_data_free(out_data);
+
+    CAMLreturn( ml_data );
+}
+
 CAMLprim value delete_path( value handle, value ml_list, value len )
 {
     CAMLparam3( handle, ml_list, len );
@@ -110,6 +141,37 @@ CAMLprim value delete_path( value handle, value ml_list, value len )
     {
         head = Field(ml_list, 0);
         path[ii++] = String_val(head);
+        ml_list = Field(ml_list, 1);
+    }
+
+    void *h = voidptr_of_val( handle );
+    out_data_t *out_data = vy_delete_path(h, path, length);
+    if (out_data->length > 0) {
+        data_len = out_data->length;
+        raw_data = out_data->data;
+        ml_data = caml_alloc_initialized_string(data_len, raw_data);
+    }
+    else {
+        ml_data = caml_copy_string("");
+    }
+    out_data_free(out_data);
+
+    CAMLreturn( ml_data );
+}
+
+CAMLprim value delete_path_reversed( value handle, value ml_list, value len )
+{
+    CAMLparam3( handle, ml_list, len );
+    CAMLlocal2( ml_data, head );
+    int length = Int_val(len);
+    char * raw_data;
+    size_t data_len;
+    const char *path[length];
+    int ii = 0;
+    while ( ml_list != Val_emptylist )
+    {
+        head = Field(ml_list, 0);
+        path[length-1-ii++] = String_val(head);
         ml_list = Field(ml_list, 1);
     }
 

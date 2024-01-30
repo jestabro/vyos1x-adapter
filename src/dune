@@ -1,0 +1,9 @@
+(library
+ (name vyos1x_adapter)
+ (public_name vyos1x-adapter)
+ (modules vyos1x_adapter)
+ (flags (:standard -cclib -lstdc++ -cclib -lvyatta-cfg))
+ (libraries vyos1x-config)
+ (foreign_stubs
+  (language c)
+  (names adapter)))

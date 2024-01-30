@@ -1,0 +1,22 @@
+opam-version: "2.0"
+name: "vyos1x-adapter"
+version: "0.1"
+synopsis: "VyOS 1.x adapter for vyatta-cfg"
+description: """
+A library for manipulation of the vyatta-cfg cstore data structure
+"""
+maintainer: "John Estabrook <jestabro@vyos.io>"
+authors: "VyOS maintainers and contributors <maintainers@vyos.io>"
+license: "MIT"
+homepage: "https://github.com/jestabro/vyos1x-adapter"
+bug-reports: "https://phabricator.vyos.net"
+dev-repo: "git+https://github.com/jestabro/vyos1x-adapter/"
+build: [
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name]
+]
+depends: [
+  "ocamlfind" {build}
+  "dune" {build & >= "1.4.0"}
+  "vyos1x-config" {build}
+]

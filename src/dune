@@ -1,9 +1,17 @@
 (library
  (name vyos1x_adapter)
  (public_name vyos1x-adapter)
- (modules vyos1x_adapter)
- (flags (:standard -cclib -lstdc++ -cclib -lvyatta-cfg))
- (libraries vyos1x-config)
- (foreign_stubs
-  (language c)
-  (names adapter)))
+ (libraries vyos1x-config ctypes ctypes-foreign)
+ (modules vyos1x_adapter))
+
+(executable
+ (name cli_set)
+ (public_name vy_set)
+ (libraries vyos1x_adapter)
+ (modules cli_set))
+
+(executable
+ (name vy_load_config)
+ (public_name vy_load_config)
+ (libraries vyos1x_adapter vyos1x-config)
+ (modules vy_load_config))

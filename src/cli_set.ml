@@ -22,7 +22,7 @@ let () =
         Printf.printf "not in config session\n")
     else
         let res_set = Vyos1x_adapter.set_path h path_set (List.length path_set) in
-        Printf.printf "setting [%s]\n" (String.concat " " (path_set));
+        Printf.printf "\nSetting [%s]\n" (String.concat " " (path_set));
         print_res res_set;
         Vyos1x_adapter.handle_free h
 

@@ -1,11 +1,13 @@
 open Vyos1x
 
-val handle_init : unit -> int
-val handle_free : int -> unit
-val in_config_session_handle : int -> bool
-val in_config_session : unit -> bool
-val set_path : int -> string list -> int -> string
-val delete_path : int -> string list -> int -> string
+val cstore_handle_init : unit -> int
+val cstore_handle_free : int -> unit
+val cstore_in_config_session_handle : int -> bool
+val cstore_in_config_session : unit -> bool
+val cstore_set_path : int -> string list -> string
+val legacy_validate_path : int -> string list -> string
+val legacy_set_path : int -> string list -> string
+val cstore_delete_path : int -> string list -> string
 val set_path_reversed : int -> string list -> int -> string
 val delete_path_reversed : int -> string list -> int -> string
 

@@ -8,27 +8,50 @@ let cstore_free = foreign ~from:libvyatta "vy_cstore_free" (uint64_t @-> returni
 let in_session = foreign ~from:libvyatta "vy_in_session" (uint64_t @-> returning int)
 let vy_set_path = foreign ~from:libvyatta "vy_set_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
 let vy_del_path = foreign ~from:libvyatta "vy_delete_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
+let vy_validate_path = foreign ~from:libvyatta "vy_validate_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
+let vy_legacy_set_path = foreign ~from:libvyatta "vy_legacy_set_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
 
-let handle_init () = Unsigned.UInt64.to_int (cstore_init ())
-let handle_free h = cstore_free (Unsigned.UInt64.of_int h)
-let in_config_session_handle h = in_session (Unsigned.UInt64.of_int h) = 1
-let in_config_session () = in_config_session_handle (handle_init ())
-let set_path handle path len =
+let cstore_handle_init () = Unsigned.UInt64.to_int (cstore_init ())
+let cstore_handle_free h = cstore_free (Unsigned.UInt64.of_int h)
+let cstore_in_config_session_handle h = in_session (Unsigned.UInt64.of_int h) = 1
+let cstore_in_config_session () = cstore_in_config_session_handle (cstore_handle_init ())
+
+let cstore_set_path handle path =
+    let len = List.length path in
     let arr = CArray.of_list string path in
     vy_set_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
 
-let delete_path handle path len =
+let legacy_validate_path handle path =
+    let len = List.length path in
+    let arr = CArray.of_list string path in
+    vy_validate_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
+
+let legacy_set_path handle path =
+    let len = List.length path in
+    let arr = CArray.of_list string path in
+    vy_legacy_set_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
+
+let cstore_delete_path handle path =
+    let len = List.length path in
     let arr = CArray.of_list string path in
     vy_del_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
 
-let set_path_reversed handle path len =
+let set_path_reversed handle path _len =
     let path = List.rev path in
-    set_path handle path len
+    cstore_set_path handle path
 
-let delete_path_reversed handle path len =
+let delete_path_reversed handle path _len =
     let path = List.rev path in
-    delete_path handle path len
+    cstore_delete_path handle path
+(*
+module VC = Vyconf.Vyconf_client_api
 
+let vyconf_token_init =
+    VC.token_init
+
+let vyconf_validate_path token path =
+    VC.validate token path
+*)
 open Vyos1x
 
 module CT = Config_tree
@@ -64,7 +87,7 @@ let del_values handle acc out vs =
     | _ -> List.fold_left (del_value handle acc) out vs
 
 let del_path handle path out =
-    out ^ (delete_path handle path (List.length path))
+    out ^ (cstore_delete_path handle path)
 
 (*
 let update_data (CD.Diff_cstore data) m =
@@ -95,14 +118,14 @@ let cstore_diff ?recurse:_ (path : string list) (CD.Diff_cstore res) (m : CD.cha
                       CD.Diff_cstore { res with out = out }
 
 let load_config left right =
-    let h = handle_init () in
-    if not (in_config_session_handle h) then
-        (handle_free h;
+    let h = cstore_handle_init () in
+    if not (cstore_in_config_session_handle h) then
+        (cstore_handle_free h;
         let out = "not in config session\n" in
         out)
     else
         let dcstore = CD.make_diff_cstore left right h in
         let dcstore = CD.diff [] cstore_diff dcstore (Option.some left, Option.some right) in
         let ret = CD.eval_result dcstore in
-        handle_free h;
+        cstore_handle_free h;
         ret.out

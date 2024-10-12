@@ -1,13 +1,14 @@
 (library
  (name vyos1x_adapter)
  (public_name vyos1x-adapter)
- (libraries vyos1x-config ctypes ctypes-foreign)
- (modules vyos1x_adapter))
+ (libraries vyos1x-config vyconf.vyconf-client ctypes ctypes-foreign lwt lwt.unix lwt_log lwt_ppx)
+ (modules vyos1x_adapter)
+ (preprocess (pps lwt_ppx ppx_deriving_yojson)))
 
 (executable
  (name cli_set)
  (public_name vy_set)
- (libraries vyos1x_adapter)
+ (libraries vyos1x_adapter vyconf.vyconf-client)
  (modules cli_set))
 
 (executable

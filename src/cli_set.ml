@@ -11,18 +11,39 @@ let path_arg = ref []
 let args = []
 let usage = Printf.sprintf "Usage: %s <path>" Sys.argv.(0)
 
+let legacy = ref false
+let no_set = ref false
+
 let () = if Array.length Sys.argv = 1 then (Arg.usage args usage; exit 1)
 let () = Arg.parse args (fun s -> path_arg := s::!path_arg) usage
 
+let args = [
+  ("--legacy-validate", Arg.Bool (fun s -> legacy := s), "Use legacy validate");
+  ("--no-set", Arg.Bool (fun s -> legacy := s), "Validate but do not set in cstore");
+]
+
 let () =
     let path_set = List.rev !path_arg in
-    let h = Vyos1x_adapter.handle_init () in
-    if not (Vyos1x_adapter.in_config_session_handle h) then
-        (Vyos1x_adapter.handle_free h;
-        Printf.printf "not in config session\n")
-    else
-        let res_set = Vyos1x_adapter.set_path h path_set (List.length path_set) in
+    if not legacy then
+        let token = Vyos1x_adapter.vyconf_token_init in
+        Vyos1x_adapter.vyconf_validate_path path_set;
+    if legacy or not no_set then
+        let h = Vyos1x_adapter.cstore_handle_init () in
+        if not (Vyos1x_adapter.cstore_in_config_session_handle h) then
+            (Vyos1x_adapter.cstore_handle_free h;
+            Printf.printf "not in config session\n"; exit 1);
+        let res_valid =
+            if legacy then
+                Vyos1x_adapter.cstore_validate_path h path_set
+            else ""
+        in
+        let res_set =
+            if not no_set then
+                Vyos1x_adapter.cstore_set_path h path_set
+            else ""
+        in
+        Vyos1x_adapter.cstore_handle_free h;
         Printf.printf "\nSetting [%s]\n" (String.concat " " (path_set));
-        print_res res_set;
-        Vyos1x_adapter.handle_free h
+        if res_valid <> "" then Printf.print "%s\n" res_valid;
+        if res_valid <> "" then Printf.print "%s\n" res_set;
 

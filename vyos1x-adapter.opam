@@ -19,4 +19,5 @@ depends: [
   "ocamlfind" {build}
   "dune" {build & >= "1.4.0"}
   "vyos1x-config" {build}
+  "vyconf" {build}
 ]

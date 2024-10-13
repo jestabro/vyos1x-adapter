@@ -1,6 +1,8 @@
 (* CLI set path
  *)
 
+module VC = Vyconf.Vyconf_client.Vyconf_client_api
+
 let print_res res =
     if res <> "" then
         Printf.printf "%s\n" res
@@ -25,8 +27,10 @@ let args = [
 let () =
     let path_set = List.rev !path_arg in
     if not legacy then
-        let token = Vyos1x_adapter.vyconf_token_init in
-        Vyos1x_adapter.vyconf_validate_path path_set;
+        let token = VC.session_init in
+        let res_valid = VC.validate_path token path in
+        VC.session_free;
+        Printf.printf "%s\n", res_valid;
     if legacy or not no_set then
         let h = Vyos1x_adapter.cstore_handle_init () in
         if not (Vyos1x_adapter.cstore_in_config_session_handle h) then
@@ -39,11 +43,11 @@ let () =
         in
         let res_set =
             if not no_set then
+                Printf.printf "\nSetting [%s]\n" (String.concat " " (path_set));
                 Vyos1x_adapter.cstore_set_path h path_set
             else ""
         in
         Vyos1x_adapter.cstore_handle_free h;
-        Printf.printf "\nSetting [%s]\n" (String.concat " " (path_set));
         if res_valid <> "" then Printf.print "%s\n" res_valid;
         if res_valid <> "" then Printf.print "%s\n" res_set;
 

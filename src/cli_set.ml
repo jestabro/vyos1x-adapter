@@ -2,7 +2,7 @@
  *)
 
 
-open Vyconf
+open Client
 
 module VC = Vyconf_client_api
 
@@ -29,28 +29,28 @@ let args = [
 
 let () =
     let path_set = List.rev !path_arg in
-    if not legacy then
-        let token = VC.session_init in
-        let res_valid = VC.validate_path token path in
-        VC.session_free;
-        Printf.printf "%s\n", res_valid;
-    if legacy or not no_set then
+    if not !legacy then
+        let token = VC.session_init () in
+        let res_valid = VC.session_validate_path token path_set in
+        Printf.printf "%s\n" res_valid;
+        ignore(VC.session_free);
+    if !legacy || not !no_set then
         let h = Vyos1x_adapter.cstore_handle_init () in
         if not (Vyos1x_adapter.cstore_in_config_session_handle h) then
             (Vyos1x_adapter.cstore_handle_free h;
             Printf.printf "not in config session\n"; exit 1);
         let res_valid =
-            if legacy then
-                Vyos1x_adapter.cstore_validate_path h path_set
+            if !legacy then
+                Vyos1x_adapter.legacy_validate_path h path_set
             else ""
         in
         let res_set =
-            if not no_set then
+            if not !no_set then
                 let () = Printf.printf "\nSetting [%s]\n" (String.concat " " (path_set)) in
                 Vyos1x_adapter.cstore_set_path h path_set
             else ""
         in
         Vyos1x_adapter.cstore_handle_free h;
-        if res_valid <> "" then Printf.print "%s\n" res_valid;
-        if res_valid <> "" then Printf.print "%s\n" res_set;
+        if res_valid <> "" then Printf.printf "%s\n" res_valid;
+        if res_valid <> "" then Printf.printf "%s\n" res_set;
 

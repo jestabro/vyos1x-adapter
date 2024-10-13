@@ -21,27 +21,28 @@ let cstore_set_path handle path =
     let arr = CArray.of_list string path in
     vy_set_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
 
-let legacy_validate handle path =
+let legacy_validate_path handle path =
     let len = List.length path in
     let arr = CArray.of_list string path in
     vy_validate_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
 
-let legacy_set handle path =
+let legacy_set_path handle path =
     let len = List.length path in
     let arr = CArray.of_list string path in
     vy_legacy_set_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
 
-let cstore_delete_path handle path len =
+let cstore_delete_path handle path =
+    let len = List.length path in
     let arr = CArray.of_list string path in
     vy_del_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
 
-let set_path_reversed handle path len =
+let set_path_reversed handle path _len =
     let path = List.rev path in
-    cstore_set_path handle path len
+    cstore_set_path handle path
 
-let delete_path_reversed handle path len =
+let delete_path_reversed handle path _len =
     let path = List.rev path in
-    cstore_delete_path handle path len
+    cstore_delete_path handle path
 (*
 module VC = Vyconf.Vyconf_client_api
 
@@ -86,7 +87,7 @@ let del_values handle acc out vs =
     | _ -> List.fold_left (del_value handle acc) out vs
 
 let del_path handle path out =
-    out ^ (delete_path handle path (List.length path))
+    out ^ (cstore_delete_path handle path)
 
 (*
 let update_data (CD.Diff_cstore data) m =
@@ -118,13 +119,13 @@ let cstore_diff ?recurse:_ (path : string list) (CD.Diff_cstore res) (m : CD.cha
 
 let load_config left right =
     let h = cstore_handle_init () in
-    if not (in_config_session_handle h) then
-        (handle_free h;
+    if not (cstore_in_config_session_handle h) then
+        (cstore_handle_free h;
         let out = "not in config session\n" in
         out)
     else
         let dcstore = CD.make_diff_cstore left right h in
         let dcstore = CD.diff [] cstore_diff dcstore (Option.some left, Option.some right) in
         let ret = CD.eval_result dcstore in
-        handle_free h;
+        cstore_handle_free h;
         ret.out

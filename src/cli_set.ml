@@ -1,7 +1,10 @@
 (* CLI set path
  *)
 
-module VC = Vyconf.Vyconf_client.Vyconf_client_api
+
+open Vyconf
+
+module VC = Vyconf_client_api
 
 let print_res res =
     if res <> "" then
@@ -43,7 +46,7 @@ let () =
         in
         let res_set =
             if not no_set then
-                Printf.printf "\nSetting [%s]\n" (String.concat " " (path_set));
+                let () = Printf.printf "\nSetting [%s]\n" (String.concat " " (path_set)) in
                 Vyos1x_adapter.cstore_set_path h path_set
             else ""
         in

@@ -8,11 +8,13 @@ let cstore_free = foreign ~from:libvyatta "vy_cstore_free" (uint64_t @-> returni
 let in_session = foreign ~from:libvyatta "vy_in_session" (uint64_t @-> returning int)
 let vy_set_path = foreign ~from:libvyatta "vy_set_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
 let vy_del_path = foreign ~from:libvyatta "vy_delete_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
+let vy_validate_path = foreign ~from:libvyatta "vy_validate_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
+let vy_legacy_set_path = foreign ~from:libvyatta "vy_legacy_set_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
 
 let cstore_handle_init () = Unsigned.UInt64.to_int (cstore_init ())
 let cstore_handle_free h = cstore_free (Unsigned.UInt64.of_int h)
 let cstore_in_config_session_handle h = in_session (Unsigned.UInt64.of_int h) = 1
-let cstore_in_config_session () = cstore_in_config_session_handle (handle_init ())
+let cstore_in_config_session () = cstore_in_config_session_handle (cstore_handle_init ())
 
 let cstore_set_path handle path =
     let len = List.length path in
@@ -35,11 +37,11 @@ let cstore_delete_path handle path len =
 
 let set_path_reversed handle path len =
     let path = List.rev path in
-    set_path handle path len
+    cstore_set_path handle path len
 
 let delete_path_reversed handle path len =
     let path = List.rev path in
-    delete_path handle path len
+    cstore_delete_path handle path len
 (*
 module VC = Vyconf.Vyconf_client_api
 
@@ -115,7 +117,7 @@ let cstore_diff ?recurse:_ (path : string list) (CD.Diff_cstore res) (m : CD.cha
                       CD.Diff_cstore { res with out = out }
 
 let load_config left right =
-    let h = handle_init () in
+    let h = cstore_handle_init () in
     if not (in_config_session_handle h) then
         (handle_free h;
         let out = "not in config session\n" in

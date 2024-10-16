@@ -28,8 +28,8 @@ let usage = "Usage: " ^ Sys.argv.(0) ^ " [options]"
 
 let args = [
     ("--path", Arg.String (fun s -> path_opt := s), "<string> Configuration path");
-    ("--legacy", Arg.String (fun _ -> legacy := true), "<bool> Use legacy validation");
-    ("--no-set", Arg.String (fun _ -> no_set := true), "<bool> Do not set path");
+    ("--legacy", Arg.Unit (fun _ -> legacy := true), "Use legacy validation");
+    ("--no-set", Arg.Unit (fun _ -> no_set := true), "Do not set path");
    ]
 
 let get_sockname =
@@ -50,38 +50,40 @@ let run socket path_list =
 *)
 let validate_path path =
     let socket = get_sockname in
-    let path_list = Vyos1x.Util.list_of_path path in
-    try
-        let out = Lwt_main.run (run socket path_list) in
-        print_endline (Result.value out ~default:""); 0
-    with exn e -> print_endline ("Error: " ^ e); 1
+(*    let path_list = Vyos1x.Util.list_of_path path in *)
+    let out = Lwt_main.run (run socket path) in
+    match out with
+    | Ok res ->
+        print_endline res; ""
+    | Error e ->
+        print_endline e; e
 
 
 let () =
     let () = Arg.parse args (fun _ -> ()) usage in
 (*    let path_set = List.rev !path_arg in *)
 (*    let path_set = Vyos1x.Util.list_of_path !path_opt in *)
-    let res =
-        if not !legacy then validate_path !path_opt
-        else 0
+    let path_list = Vyos1x.Util.list_of_path !path_opt in
+    let valid =
+        if not !legacy then validate_path path_list
+        else ""
     in
     if !legacy || not !no_set then
         let h = Vyos1x_adapter.cstore_handle_init () in
         if not (Vyos1x_adapter.cstore_in_config_session_handle h) then
             (Vyos1x_adapter.cstore_handle_free h;
-            Printf.printf "not in config session\n");
-            exit 1
+            Printf.printf "not in config session\n")
         else
             let res_valid =
             if !legacy then
-                Vyos1x_adapter.legacy_validate_path h path_set
+                Vyos1x_adapter.legacy_validate_path h path_list
             else ""
             in
             let res_set =
-                if not !no_set then
-                    Vyos1x_adapter.cstore_set_path h path_set
+                if not !no_set && valid = "" && res_valid = "" then
+                    Vyos1x_adapter.cstore_set_path h path_list
                 else ""
             in
-            Printf.printf "\nSetting [%s]\n" (String.concat " " (path_set));
+            Printf.printf "\nSetting [%s]\n" (String.concat " " (path_list));
             print_res (res_valid ^ "\n" ^ res_set);
             Vyos1x_adapter.cstore_handle_free h

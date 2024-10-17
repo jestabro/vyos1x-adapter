@@ -45,12 +45,11 @@ let () =
         if not !no_set && (fst valid) then
             match handle with
             | Some h ->
-                (Printf.printf "\nSetting [%s]\n" (String.concat " " (path_list));
-                Vyos1x_adapter.cstore_set_path h path_list)
+                Vyos1x_adapter.cstore_set_path h path_list
             | None -> "missing session handle"
         else ""
     in
-    let output = (snd valid) ^ "\n" ^ res in
+    let output = (snd valid) ^ "\n\n" ^ res in
     let () =
         match handle with
         | Some h -> Vyos1x_adapter.cstore_handle_free h

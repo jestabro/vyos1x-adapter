@@ -1,6 +1,3 @@
-(* CLI set path
- *)
-
 open Client
 
 module VC = Vyconf_client_api
@@ -9,17 +6,8 @@ let legacy = ref false
 let no_set = ref false
 let valid = ref false
 let output = ref ""
-(*let path_arg = ref []
-let args = []
-let usage = Printf.sprintf "Usage: %s <path>" Sys.argv.(0)
-*)
 let path_opt = ref ""
 
-(*
-let () = if Array.length Sys.argv = 1 then (Arg.usage args usage; exit 1)
-let () = Arg.parse args (fun s -> path_arg := s::!path_arg) usage
-*)
-(* Command line arguments *)
 let usage = "Usage: " ^ Sys.argv.(0) ^ " [options]"
 
 let args = [
@@ -75,8 +63,8 @@ let () =
         if not !no_set && (fst valid) then
             match handle with
             | Some h ->
-        (Printf.printf "\nSetting [%s]\n" (String.concat " " (path_list));
-        Vyos1x_adapter.cstore_set_path h path_list)
+                (Printf.printf "\nSetting [%s]\n" (String.concat " " (path_list));
+                Vyos1x_adapter.cstore_set_path h path_list)
             | None -> "missing session handle"
         else ""
     in

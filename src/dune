@@ -9,8 +9,7 @@
  (name cli_set)
  (public_name vy_set)
  (libraries vyos1x_adapter vyconf.vyconf-client)
- (modules cli_set)
- (preprocess (pps lwt_ppx)))
+ (modules cli_set))
 
 (executable
  (name vy_load_config)

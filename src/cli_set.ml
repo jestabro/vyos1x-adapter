@@ -1,5 +1,3 @@
-module VC = Client.Vyconf_client_api
-
 let legacy = ref false
 let no_set = ref false
 let valid = ref false
@@ -16,22 +14,6 @@ let speclist = [
     ("--no-set", Arg.Unit (fun _ -> no_set := true), "Do not set path");
    ]
 
-let get_sockname =
-    "/var/run/vyconfd.sock"
-
-let validate_path path =
-    let socket = get_sockname in
-    let token = VC.session_init socket in
-    match token with
-    | Error e -> (false, e)
-    | Ok token ->
-        let out = VC.session_validate_path socket token path
-        in
-        let _ = VC.session_free socket token in
-        match out with
-        | Ok o -> (true, o)
-        | Error e -> (false, e)
-
 let () =
     let () = Arg.parse speclist read_path usage in
     let path_list = List.rev !path_opt in
@@ -46,7 +28,7 @@ let () =
     in
     let valid =
         if not !legacy then
-            validate_path path_list
+            Vyos1x_adapter.vyconf_validate_path path_list
         else
             begin
             let out =

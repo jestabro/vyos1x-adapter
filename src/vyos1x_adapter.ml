@@ -6,10 +6,10 @@ let libvyatta = Dl.dlopen ~flags:[Dl.RTLD_LAZY] ~filename:"libvyatta-cfg.so"
 let cstore_init = foreign ~from:libvyatta "vy_cstore_init" (void @-> returning uint64_t)
 let cstore_free = foreign ~from:libvyatta "vy_cstore_free" (uint64_t @-> returning void)
 let in_session = foreign ~from:libvyatta "vy_in_session" (uint64_t @-> returning int)
-let vy_set_path = foreign ~from:libvyatta "vy_set_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
-let vy_del_path = foreign ~from:libvyatta "vy_delete_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
-let vy_validate_path = foreign ~from:libvyatta "vy_validate_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
-let vy_legacy_set_path = foreign ~from:libvyatta "vy_legacy_set_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
+let cstore_set_path = foreign ~from:libvyatta "vy_set_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
+let cstore_del_path = foreign ~from:libvyatta "vy_delete_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
+let cstore_validate_path = foreign ~from:libvyatta "vy_validate_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
+let cstore_legacy_set_path = foreign ~from:libvyatta "vy_legacy_set_path" (uint64_t @-> (ptr void) @-> size_t @-> returning string)
 
 let cstore_handle_init () = Unsigned.UInt64.to_int (cstore_init ())
 let cstore_handle_free h = cstore_free (Unsigned.UInt64.of_int h)
@@ -19,22 +19,22 @@ let cstore_in_config_session () = cstore_in_config_session_handle (cstore_handle
 let cstore_set_path handle path =
     let len = List.length path in
     let arr = CArray.of_list string path in
-    vy_set_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
+    cstore_set_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
 
 let legacy_validate_path handle path =
     let len = List.length path in
     let arr = CArray.of_list string path in
-    vy_validate_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
+    cstore_validate_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
 
 let legacy_set_path handle path =
     let len = List.length path in
     let arr = CArray.of_list string path in
-    vy_legacy_set_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
+    cstore_legacy_set_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
 
 let cstore_delete_path handle path =
     let len = List.length path in
     let arr = CArray.of_list string path in
-    vy_del_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
+    cstore_del_path (Unsigned.UInt64.of_int handle) (to_voidp (CArray.start arr)) (Unsigned.Size_t.of_int len)
 
 let set_path_reversed handle path _len =
     let path = List.rev path in
@@ -43,15 +43,25 @@ let set_path_reversed handle path _len =
 let delete_path_reversed handle path _len =
     let path = List.rev path in
     cstore_delete_path handle path
-(*
-module VC = Vyconf.Vyconf_client_api
 
-let vyconf_token_init =
-    VC.token_init
+module VC = Client.Vyconf_client_session
 
-let vyconf_validate_path token path =
-    VC.validate token path
-*)
+let get_sockname =
+    "/var/run/vyconfd.sock"
+
+let vyconf_validate_path path =
+    let socket = get_sockname in
+    let token = VC.session_init socket in
+    match token with
+    | Error e -> (false, e)
+    | Ok token ->
+        let out = VC.session_validate_path socket token path
+        in
+        let _ = VC.session_free socket token in
+        match out with
+        | Ok o -> (true, o)
+        | Error e -> (false, e)
+
 open Vyos1x
 
 module CT = Config_tree

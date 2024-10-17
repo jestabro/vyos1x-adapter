@@ -1,17 +1,17 @@
-open Client
-
-module VC = Vyconf_client_api
+module VC = Client.Vyconf_client_api
 
 let legacy = ref false
 let no_set = ref false
 let valid = ref false
 let output = ref ""
-let path_opt = ref ""
+let path_opt = ref []
 
 let usage = "Usage: " ^ Sys.argv.(0) ^ " [options]"
 
-let args = [
-    ("--path", Arg.String (fun s -> path_opt := s), "<string> Configuration path");
+let read_path p =
+    path_opt := p::!path_opt
+
+let speclist = [
     ("--legacy", Arg.Unit (fun _ -> legacy := true), "Use legacy validation");
     ("--no-set", Arg.Unit (fun _ -> no_set := true), "Do not set path");
    ]
@@ -19,13 +19,13 @@ let args = [
 let get_sockname =
     "/var/run/vyconfd.sock"
 
-let validate_path path_list =
+let validate_path path =
     let socket = get_sockname in
     let token = VC.session_init socket in
     match token with
     | Error e -> (false, e)
     | Ok token ->
-        let out = VC.session_validate_path socket token path_list
+        let out = VC.session_validate_path socket token path
         in
         let _ = VC.session_free socket token in
         match out with
@@ -33,8 +33,8 @@ let validate_path path_list =
         | Error e -> (false, e)
 
 let () =
-    let () = Arg.parse args (fun _ -> ()) usage in
-    let path_list = Vyos1x.Util.list_of_path !path_opt in
+    let () = Arg.parse speclist read_path usage in
+    let path_list = List.rev !path_opt in
     let handle =
         if !legacy || not !no_set then
             let h = Vyos1x_adapter.cstore_handle_init () in

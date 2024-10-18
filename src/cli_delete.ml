@@ -1,28 +1,35 @@
-(* CLI delete path
- *)
+let path_opt = ref []
 
-let print_res res =
-    if res <> "" then
-        Printf.printf "%s\n" res
-    else
-        Printf.printf "no error\n"
+let usage = "Usage: " ^ Sys.argv.(0) ^ " [options]"
 
-let path_arg = ref []
-let args = []
-let usage = Printf.sprintf "Usage: %s <path>" Sys.argv.(0)
+let read_path p =
+    path_opt := p::!path_opt
 
-let () = if Array.length Sys.argv = 1 then (Arg.usage args usage; exit 1)
-let () = Arg.parse args (fun s -> path_arg := s::!path_arg) usage
+let speclist = [
+   ]
 
 let () =
-    let path_del = List.rev !path_arg in
-    let h = Vyos1x_adapter.handle_init () in
-    if not (Vyos1x_adapter.in_config_session_handle h) then
-        (Vyos1x_adapter.handle_free h;
-        Printf.printf "not in config session\n")
-    else
-        let res_del = Vyos1x_adapter.delete_path h path_del (List.length path_del) in
-        Printf.printf "deleting [%s]\n" (String.concat " " (path_del));
-        print_res res_del;
-        Vyos1x_adapter.handle_free h
-
+    let () = Arg.parse speclist read_path usage in
+    let path_list = List.rev !path_opt in
+    let () =
+        if List.length path_list = 0 then
+            (Printf.printf "no path specified\n"; exit 1)
+    in
+    let handle =
+        let h = Vyos1x_adapter.cstore_handle_init () in
+        if not (Vyos1x_adapter.cstore_in_config_session_handle h) then
+            (Vyos1x_adapter.cstore_handle_free h;
+            Printf.printf "not in config session\n"; exit 1)
+        else Some h
+    in
+    let output =
+        match handle with
+        | Some h -> Vyos1x_adapter.cstore_delete_path h path_list
+        | None -> "missing session handle"
+    in
+    let () =
+        match handle with
+        | Some h -> Vyos1x_adapter.cstore_handle_free h
+        | None -> ()
+    in
+    print_endline output

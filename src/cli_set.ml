@@ -21,6 +21,10 @@ let format_out l =
 let () =
     let () = Arg.parse speclist read_path usage in
     let path_list = List.rev !path_opt in
+    let () =
+        if List.length path_list = 0 then
+            (Printf.printf "no path specified\n"; exit 1)
+    in
     let handle =
         if !legacy || not !no_set then
             let h = Vyos1x_adapter.cstore_handle_init () in

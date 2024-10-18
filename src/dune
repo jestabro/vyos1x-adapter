@@ -12,6 +12,12 @@
  (modules cli_set))
 
 (executable
+ (name cli_delete)
+ (public_name vy_delete)
+ (libraries vyos1x_adapter vyconf.vyconf-client)
+ (modules cli_delete))
+
+(executable
  (name vy_load_config)
  (public_name vy_load_config)
  (libraries vyos1x_adapter vyos1x-config)

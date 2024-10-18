@@ -14,6 +14,10 @@ let speclist = [
     ("--no-set", Arg.Unit (fun _ -> no_set := true), "Do not set path");
    ]
 
+let format_out l =
+    let fl = List.filter (fun s -> (String.length s) > 0) l in
+    String.concat "\n\n" fl
+
 let () =
     let () = Arg.parse speclist read_path usage in
     let path_list = List.rev !path_opt in
@@ -49,7 +53,7 @@ let () =
             | None -> "missing session handle"
         else ""
     in
-    let output = (snd valid) ^ "\n\n" ^ res in
+    let output = format_out [snd valid; res] in
     let () =
         match handle with
         | Some h -> Vyos1x_adapter.cstore_handle_free h

@@ -11,6 +11,6 @@ val cstore_delete_path : int -> string list -> string
 val set_path_reversed : int -> string list -> int -> string
 val delete_path_reversed : int -> string list -> int -> string
 
-val vyconf_validate_path : string list -> bool * string
+val vyconf_validate_path : string list -> string option
 
 val load_config : Config_tree.t -> Config_tree.t -> string

@@ -53,14 +53,13 @@ let vyconf_validate_path path =
     let socket = get_sockname in
     let token = VC.session_init socket in
     match token with
-    | Error e -> (false, e)
+    | Error e -> Some e
     | Ok token ->
-        let out = VC.session_validate_path socket token path
-        in
+        let out = VC.session_validate_path socket token path in
         let _ = VC.session_free socket token in
         match out with
-        | Ok o -> (true, o)
-        | Error e -> (false, e)
+        | Ok _ -> None
+        | Error e -> Some e
 
 open Vyos1x
 

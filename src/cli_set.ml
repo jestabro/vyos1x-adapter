@@ -18,6 +18,14 @@ let format_out l =
     let fl = List.filter (fun s -> (String.length s) > 0) l in
     String.concat "\n\n" fl
 
+let is_valid v =
+    match v with
+    | None -> true
+    | Some _ -> false
+
+let valid_err v =
+    Option.value v ~default:""
+
 let () =
     let () = Arg.parse speclist read_path usage in
     let path_list = List.rev !path_opt in
@@ -45,19 +53,19 @@ let () =
                 | None -> "missing session handle"
             in
             match out with
-            | "" -> (true, "")
-            | _ -> (false, out)
+            | "" -> None
+            | _ -> Some out
             end
     in
     let res =
-        if not !no_set && (fst valid) then
+        if not !no_set && (is_valid valid) then
             match handle with
             | Some h ->
                 Vyos1x_adapter.cstore_set_path h path_list
             | None -> "missing session handle"
         else ""
     in
-    let output = format_out [snd valid; res] in
+    let output = format_out [(valid_err valid); res] in
     let () =
         match handle with
         | Some h -> Vyos1x_adapter.cstore_handle_free h
